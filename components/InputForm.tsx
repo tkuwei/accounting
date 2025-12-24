@@ -47,7 +47,7 @@ const InputForm: React.FC<InputFormProps> = ({ selectedDate, onSave, onDelete, e
     
     onSave({
       date: selectedDate,
-      type: mode === '收入' || mode === 'income' ? '收入' : '支出',
+      type: mode === 'income' ? '收入' : '支出',
       category,
       amount: Number(amount),
       note,
