@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>樹新店記帳</title>
-    <!-- 使用 Tailwind CDN 以簡化設定，Vite 會在打包時保留此標籤 -->
+    
+    <!-- Favicon & App Icon configuration -->
+    <link rel="icon" type="image/png" href="/icon.png">
+    <link rel="apple-touch-icon" href="/icon.png">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
@@ -13,6 +17,13 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         /* Hide scrollbar for IE, Edge and Firefox */
         .no-scrollbar { -ms-overflow-style: none;  scrollbar-width: none; }
+        
+        @keyframes bounce-in {
+            0% { transform: translate(-50%, 100%); opacity: 0; }
+            60% { transform: translate(-50%, -10%); opacity: 1; }
+            100% { transform: translate(-50%, 0); opacity: 1; }
+        }
+        .animate-bounce-in { animation: bounce-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
     </style>
 <script type="importmap">
 {
@@ -21,9 +32,7 @@
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
     "recharts": "https://esm.sh/recharts@^3.6.0",
-    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
-    "vite": "https://esm.sh/vite@^7.3.0"
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0"
   }
 }
 </script>

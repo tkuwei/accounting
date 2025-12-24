@@ -107,6 +107,20 @@ const App: React.FC = () => {
       />
 
       <div className="max-w-6xl mx-auto p-4 md:p-6">
+        
+        {/* Brand Header */}
+        <div className="flex flex-col items-center justify-center mb-8 gap-3 animate-bounce-in">
+          <div className="relative group">
+            <div className="absolute inset-0 bg-orange-300 rounded-full blur-xl opacity-40 group-hover:opacity-60 transition-opacity"></div>
+            <img 
+              src="/icon.png" 
+              alt="Logo" 
+              className="relative w-24 h-24 rounded-full shadow-2xl border-4 border-white transform transition-transform group-hover:scale-105" 
+            />
+          </div>
+          <h1 className="text-3xl font-black text-slate-800 tracking-tight drop-shadow-sm">樹新店記帳</h1>
+        </div>
+
         {/* Navigation Tabs */}
         <div className="flex gap-4 mb-8 bg-white p-2 rounded-2xl shadow-sm border border-slate-100 max-w-md mx-auto">
           <button 

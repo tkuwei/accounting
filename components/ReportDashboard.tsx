@@ -21,7 +21,7 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
 
   // Generate Year Options
   const years = useMemo(() => {
-    const uniqueYears = (Array.from(new Set(transactions.map(t => t.date.split('-')[0]))) as string[])
+    const uniqueYears = Array.from(new Set(transactions.map(t => t.date.split('-')[0])))
       .filter(y => !isNaN(Number(y)) && y.length === 4);
     if (!uniqueYears.includes(currentYear)) uniqueYears.push(currentYear);
     return uniqueYears.sort((a, b) => Number(b) - Number(a));
@@ -114,7 +114,7 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
   const monthRatioData = getRatioData(monthData);
   const monthCostData = getCostData(monthData);
 
-  const StatCard = ({ title, value, colorClass }: any) => (
+  const StatCard = ({ title, value, colorClass }: { title: string; value: number; colorClass: string }) => (
     <div className={`p-3 rounded-xl text-center ${colorClass}`}>
       <p className="text-[10px] uppercase font-bold opacity-70 mb-1">{title}</p>
       <p className="text-sm md:text-lg font-black tracking-tight">${value.toLocaleString()}</p>
