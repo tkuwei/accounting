@@ -1,0 +1,5 @@
+{
+  "name": "樹新店記帳",
+  "description": "樹新店專用記帳應用程式，整合 Google Apps Script 雲端同步功能。",
+  "requestFramePermissions": []
+}
