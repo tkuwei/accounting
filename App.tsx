@@ -108,25 +108,12 @@ const App: React.FC = () => {
 
       <div className="max-w-6xl mx-auto p-4 md:p-6">
         
-        {/* Brand Header */}
-        <div className="flex flex-col items-center justify-center mb-8 gap-3 animate-bounce-in">
-          <div className="relative group">
-            <div className="absolute inset-0 bg-orange-300 rounded-full blur-xl opacity-40 group-hover:opacity-60 transition-opacity"></div>
-            <img 
-              src="/icon.png" 
-              alt="Logo" 
-              className="relative w-24 h-24 rounded-full shadow-2xl border-4 border-white transform transition-transform group-hover:scale-105" 
-            />
-          </div>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight drop-shadow-sm">樹新店記帳</h1>
-        </div>
-
         {/* Navigation Tabs */}
-        <div className="flex gap-4 mb-8 bg-white p-2 rounded-2xl shadow-sm border border-slate-100 max-w-md mx-auto">
+        <div className="flex gap-4 mb-8 bg-orange-50 p-2 rounded-2xl shadow-sm border border-orange-100 max-w-md mx-auto">
           <button 
             onClick={() => setViewMode('record')}
             className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${
-              viewMode === 'record' ? 'bg-slate-800 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'
+              viewMode === 'record' ? 'bg-slate-800 text-white shadow-lg' : 'text-slate-400 hover:bg-white/50'
             }`}
           >
             <PenTool size={18} /> 記帳錄入
@@ -134,7 +121,7 @@ const App: React.FC = () => {
           <button 
              onClick={() => setViewMode('report')}
              className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${
-              viewMode === 'report' ? 'bg-orange-500 text-white shadow-lg shadow-orange-200' : 'text-slate-400 hover:bg-slate-50'
+              viewMode === 'report' ? 'bg-orange-500 text-white shadow-lg shadow-orange-200' : 'text-slate-400 hover:bg-white/50'
             }`}
           >
             <LayoutDashboard size={18} /> 經營報表
@@ -157,7 +144,7 @@ const App: React.FC = () => {
                 }}
               />
               
-              <div className="bg-white p-5 rounded-3xl shadow-lg border border-slate-100 min-h-[300px]">
+              <div className="bg-orange-50 p-5 rounded-3xl shadow-lg border border-orange-100 min-h-[300px]">
                 <h4 className="font-black text-slate-700 mb-4 flex items-center gap-2 text-lg">
                   <div className="w-1 h-6 bg-orange-500 rounded-full"></div>
                   當日明細
@@ -172,8 +159,8 @@ const App: React.FC = () => {
                       <div 
                         key={t.id} 
                         onClick={() => setEditingId(t.id)}
-                        className={`group cursor-pointer flex justify-between items-center p-4 rounded-2xl border transition-all hover:shadow-md ${
-                          t.type === '收入' ? 'bg-green-50/30 border-green-100 hover:bg-green-50' : 'bg-red-50/30 border-red-100 hover:bg-red-50'
+                        className={`group cursor-pointer flex justify-between items-center p-4 rounded-2xl border transition-all hover:shadow-md bg-white ${
+                          t.type === '收入' ? 'border-green-100 hover:border-green-300' : 'border-red-100 hover:border-red-300'
                         }`}
                       >
                         <div>
