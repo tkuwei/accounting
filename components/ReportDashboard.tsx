@@ -66,7 +66,6 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
       return weeks.map(w => ({ ...w, net: w.inc - w.exp }));
     } else {
       // Day Mode
-      // Simply map data for every day of the year
       const daysInYear = ((Number(year) % 4 === 0 && Number(year) % 100 > 0) || Number(year) % 400 === 0) ? 366 : 365;
       const data = [];
       const curr = new Date(Number(year), 0, 1);
@@ -96,23 +95,37 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
     ];
   };
 
+  // Cost Logic: Merge Salary, Merge Misc (Clean, Repair, Misc), Keep others distinct
   const getCostData = (data: Transaction[]) => {
     const expenses = data.filter(t => t.type === '支出');
     const catMap: Record<string, number> = {};
+    
     expenses.forEach(t => {
-      let cat = t.category;
-      if (cat.includes('薪資')) cat = '薪資';
-      catMap[cat] = (catMap[cat] || 0) + t.amount;
+      let key = t.category;
+      
+      // Logic: Merge all salary types into one
+      if (key.includes('薪資')) {
+        key = '薪資總計';
+      }
+      // Logic: Merge Cleaning, Repair, and Misc into '雜支'
+      else if (['清潔維護費', '維修', '雜項'].includes(key)) {
+        key = '雜支';
+      }
+      
+      catMap[key] = (catMap[key] || 0) + t.amount;
     });
+
     return Object.entries(catMap)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
   };
 
-  const yearRatioData = getRatioData(yearData);
-  const yearCostData = getCostData(yearData);
-  const monthRatioData = getRatioData(monthData);
-  const monthCostData = getCostData(monthData);
+  const chartsData = [
+    { title: `${year}年 收支比`, data: getRatioData(yearData), isCost: false },
+    { title: `${year}年 成本結構`, data: getCostData(yearData), isCost: true },
+    { title: `${month}月 收支比`, data: getRatioData(monthData), isCost: false },
+    { title: `${month}月 成本結構`, data: getCostData(monthData), isCost: true },
+  ];
 
   const StatCard = ({ title, value, colorClass }: { title: string; value: number; colorClass: string }) => (
     <div className={`p-3 rounded-xl text-center ${colorClass}`}>
@@ -205,43 +218,48 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
         </div>
       </div>
 
-      {/* Pie Charts Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          { title: "年度 收支比", data: yearRatioData, isCost: false },
-          { title: "年度 成本結構", data: yearCostData, isCost: true },
-          { title: "本月 收支比", data: monthRatioData, isCost: false },
-          { title: "本月 成本結構", data: monthCostData, isCost: true },
-        ].map((chart, idx) => (
-          <div key={idx} className="bg-orange-50 p-4 rounded-3xl shadow-sm border border-orange-100 flex flex-col items-center">
-            <h4 className="text-xs font-bold text-slate-500 mb-4">{chart.title}</h4>
-            <div className="w-full h-[200px]">
-              {chart.data.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={chart.data}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {chart.data.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={chart.isCost ? COLORS[index % COLORS.length] : (entry.name === '總收入' ? '#22c55e' : '#ef4444')} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend iconType="circle" wrapperStyle={{fontSize: '10px'}} />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center text-slate-300 text-xs">無數據</div>
-              )}
+      {/* 2x2 Pie Charts Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {chartsData.map((chart, idx) => {
+          const totalValue = chart.data.reduce((sum, item) => sum + item.value, 0);
+
+          return (
+            <div key={idx} className="bg-orange-50 p-4 rounded-3xl shadow-sm border border-orange-100 flex flex-col items-center">
+              <h4 className="text-xs font-bold text-slate-500 mb-4">{chart.title}</h4>
+              <div className="w-full h-[220px]">
+                {chart.data.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={chart.data}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {chart.data.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={chart.isCost ? COLORS[index % COLORS.length] : (entry.name === '總收入' ? '#22c55e' : '#ef4444')} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        formatter={(value: number, name: string) => {
+                          const percent = totalValue > 0 ? ((value / totalValue) * 100).toFixed(1) : '0';
+                          return [`$${value.toLocaleString()} (${percent}%)`, name];
+                        }}
+                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                      />
+                      <Legend iconType="circle" wrapperStyle={{fontSize: '10px'}} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-slate-300 text-xs">無數據</div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
