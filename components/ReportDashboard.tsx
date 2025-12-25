@@ -198,13 +198,13 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
       {/* Main Charts Area */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Trend Chart */}
-        <div className="lg:col-span-2 bg-orange-50 p-6 rounded-3xl shadow-sm border border-orange-100">
+        <div className="lg:col-span-2 bg-orange-50 p-6 rounded-3xl shadow-sm border border-orange-100 min-w-0">
           <h3 className="text-lg font-black text-slate-700 mb-6 flex items-center gap-2">
              <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
              年度趨勢分析
           </h3>
           <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <ComposedChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <XAxis 
                     dataKey="name" 
@@ -251,11 +251,11 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
           const totalValue = chart.data.reduce((sum, item) => sum + item.value, 0);
 
           return (
-            <div key={idx} className="bg-orange-50 p-4 rounded-3xl shadow-sm border border-orange-100 flex flex-col items-center">
-              <h4 className="text-xs font-bold text-slate-500 mb-4">{chart.title}</h4>
+            <div key={idx} className="bg-orange-50 p-4 rounded-3xl shadow-sm border border-orange-100 flex flex-col min-w-0">
+              <h4 className="text-xs font-bold text-slate-500 mb-4 text-center">{chart.title}</h4>
               <div className="w-full h-[220px]">
                 {chart.data.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                     <PieChart>
                       <Pie
                         data={chart.data}
