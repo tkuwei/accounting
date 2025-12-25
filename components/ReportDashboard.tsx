@@ -9,7 +9,23 @@ interface ReportDashboardProps {
   transactions: Transaction[];
 }
 
-const COLORS = ['#22c55e', '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#14b8a6', '#3b82f6', '#6366f1', '#a855f7', '#ec4899'];
+// Diverse palette for expenses (excluding the specific Blue used for Profit)
+const EXPENSE_COLORS = [
+  '#ef4444', // Red
+  '#10b981', // Emerald
+  '#f59e0b', // Amber
+  '#8b5cf6', // Violet
+  '#ec4899', // Pink
+  '#06b6d4', // Cyan
+  '#f97316', // Orange
+  '#84cc16', // Lime
+  '#6366f1', // Indigo
+  '#14b8a6', // Teal
+  '#d946ef', // Fuchsia
+  '#f43f5e', // Rose
+];
+
+const PROFIT_COLOR = '#3b82f6'; // Blue 500 (Distinct from expense colors)
 
 const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
   const currentYear = new Date().getFullYear().toString();
@@ -85,18 +101,8 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
     }
   }, [yearData, trendMode, year]);
 
-  // Pie Data Helpers
-  const getRatioData = (data: Transaction[]) => {
-    const stats = calculateStats(data);
-    if (stats.inc === 0 && stats.exp === 0) return [];
-    return [
-      { name: '總收入', value: stats.inc },
-      { name: '總支出', value: stats.exp }
-    ];
-  };
-
-  // Cost Logic: Merge Salary, Merge Misc (Clean, Repair, Misc), Keep others distinct
-  const getCostData = (data: Transaction[]) => {
+  // Shared Helper: Process expenses into Cost Structure format
+  const getProcessedExpenseData = (data: Transaction[]) => {
     const expenses = data.filter(t => t.type === '支出');
     const catMap: Record<string, number> = {};
     
@@ -120,11 +126,32 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
       .sort((a, b) => b.value - a.value);
   };
 
+  // Income Composition: Net Profit + Expense Breakdown (Cost Structure style)
+  const getIncomeCompositionData = (data: Transaction[]) => {
+    const stats = calculateStats(data);
+    if (stats.inc === 0 && stats.exp === 0) return [];
+
+    const expenseBreakdown = getProcessedExpenseData(data);
+
+    // If there is profit, add it as a slice
+    if (stats.net > 0) {
+      return [{ name: '淨利', value: stats.net }, ...expenseBreakdown];
+    }
+
+    // If loss or break-even, just show expenses
+    return expenseBreakdown;
+  };
+
+  // Cost Structure: Just Expense Breakdown
+  const getCostData = (data: Transaction[]) => {
+    return getProcessedExpenseData(data);
+  };
+
   const chartsData = [
-    { title: `${year}年 收支比`, data: getRatioData(yearData), isCost: false },
-    { title: `${year}年 成本結構`, data: getCostData(yearData), isCost: true },
-    { title: `${month}月 收支比`, data: getRatioData(monthData), isCost: false },
-    { title: `${month}月 成本結構`, data: getCostData(monthData), isCost: true },
+    { title: `${year}年 收入分配`, data: getIncomeCompositionData(yearData), isIncomeDist: true },
+    { title: `${year}年 成本結構`, data: getCostData(yearData), isIncomeDist: false },
+    { title: `${month}月 收入分配`, data: getIncomeCompositionData(monthData), isIncomeDist: true },
+    { title: `${month}月 成本結構`, data: getCostData(monthData), isIncomeDist: false },
   ];
 
   const StatCard = ({ title, value, colorClass }: { title: string; value: number; colorClass: string }) => (
@@ -239,9 +266,27 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
                         paddingAngle={5}
                         dataKey="value"
                       >
-                        {chart.data.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={chart.isCost ? COLORS[index % COLORS.length] : (entry.name === '總收入' ? '#22c55e' : '#ef4444')} />
-                        ))}
+                        {chart.data.map((entry, index) => {
+                          let fill;
+                          
+                          if (entry.name === '淨利') {
+                            fill = PROFIT_COLOR;
+                          } else {
+                            // Assign color from EXPENSE_COLORS based on index
+                            // If '淨利' exists at index 0, we want stable colors for expenses.
+                            // However, simplest is just to cycle through expense colors.
+                            // If we want consistency between charts, we could hash the name to an index, but index cycle is visually cleaner.
+                            
+                            // Adjust index if Net Profit is present so expenses always start from same color
+                            const expenseIndex = chart.isIncomeDist && chart.data[0].name === '淨利' 
+                                ? index - 1 
+                                : index;
+                                
+                            fill = EXPENSE_COLORS[expenseIndex % EXPENSE_COLORS.length];
+                          }
+
+                          return <Cell key={`cell-${index}`} fill={fill} />;
+                        })}
                       </Pie>
                       <Tooltip 
                         formatter={(value: number, name: string) => {
