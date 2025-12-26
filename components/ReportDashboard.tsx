@@ -29,7 +29,8 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
 
   useEffect(() => {
     // Delay rendering charts to allow flex/grid layout to settle
-    const timer = setTimeout(() => setIsMounted(true), 200);
+    // Increased timeout to ensure container dimensions are calculated
+    const timer = setTimeout(() => setIsMounted(true), 300);
     return () => clearTimeout(timer);
   }, []);
 
@@ -282,10 +283,11 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         <div className="lg:col-span-3 bg-orange-50 p-4 rounded-3xl shadow-sm border border-orange-100 w-full min-w-0 flex flex-col">
           <SectionHeader title="年度趨勢分析" />
-          <div className="w-full relative h-[240px] mt-auto">
+          {/* Added overflow-hidden to prevent negative width calculation issues */}
+          <div className="w-full relative h-[240px] mt-auto overflow-hidden">
             {isMounted ? (
               <div style={{ width: '100%', height: '100%' }}>
-                <ResponsiveContainer width="100%" height="100%" minWidth={0} debounce={50}>
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} debounce={300}>
                   <ComposedChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <XAxis 
                       dataKey="name" 
@@ -335,10 +337,11 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
           return (
             <div key={idx} className="bg-orange-50 p-4 rounded-3xl shadow-sm border border-orange-100 flex flex-col w-full min-w-0">
               <SectionHeader title={chart.title} sub={chart.sub} />
-              <div className="w-full relative h-[180px]">
+              {/* Added overflow-hidden to prevent negative width calculation issues */}
+              <div className="w-full relative h-[180px] overflow-hidden">
                 {isMounted && chart.data.length > 0 ? (
                   <div style={{ width: '100%', height: '100%' }}>
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} debounce={300}>
                       <PieChart>
                         <Pie data={chart.data} cx="50%" cy="50%" innerRadius={40} outerRadius={65} paddingAngle={2} dataKey="value">
                           {chart.data.map((entry, index) => {
