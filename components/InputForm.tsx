@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Transaction, RecordMode, TransactionType } from '../types';
-import { CATEGORIES } from '../constants';
+import { CATEGORIES, NOTE_PRESETS } from '../constants';
 
 interface InputFormProps {
   selectedDate: string;
@@ -62,6 +62,9 @@ const InputForm: React.FC<InputFormProps> = ({ selectedDate, onSave, onDelete, e
   };
 
   const isIncome = mode === 'income';
+  
+  // Get presets for the current category
+  const notePresets = NOTE_PRESETS[category] || [];
 
   return (
     <div className={`p-6 rounded-3xl shadow-lg border transition-all duration-300 relative ${
@@ -109,7 +112,11 @@ const InputForm: React.FC<InputFormProps> = ({ selectedDate, onSave, onDelete, e
         <div className="relative">
           <select 
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            onChange={(e) => {
+                setCategory(e.target.value);
+                // Optional: clear note when category changes if you want strictly fresh inputs
+                // setNote(''); 
+            }}
             className="w-full bg-white border-none rounded-xl p-4 text-lg font-bold outline-none shadow-sm appearance-none text-slate-700"
           >
             {isIncome ? (
@@ -136,13 +143,34 @@ const InputForm: React.FC<InputFormProps> = ({ selectedDate, onSave, onDelete, e
           }`}
         />
         
-        <input 
-          type="text" 
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="備註事項..." 
-          className="w-full bg-white border-none rounded-xl p-4 outline-none shadow-sm text-slate-600"
-        />
+        {/* Note Input Section: Split or Single */}
+        <div className="flex gap-2">
+            {notePresets.length > 0 && (
+                <div className="relative w-1/3 min-w-[100px]">
+                    <select
+                        className="w-full h-full bg-white border-none rounded-xl px-3 pl-3 pr-6 text-sm font-bold outline-none shadow-sm appearance-none text-slate-600"
+                        onChange={(e) => {
+                            if(e.target.value) setNote(e.target.value);
+                        }}
+                        value="" // Always reset to allow re-selecting the same item if needed, relies on setNote
+                    >
+                        <option value="" disabled>快速選單</option>
+                        {notePresets.map(preset => (
+                            <option key={preset} value={preset}>{preset}</option>
+                        ))}
+                    </select>
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">▼</div>
+                </div>
+            )}
+            
+            <input 
+              type="text" 
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder={notePresets.length > 0 ? "或輸入備註..." : "備註事項..."}
+              className={`bg-white border-none rounded-xl p-4 outline-none shadow-sm text-slate-600 ${notePresets.length > 0 ? 'flex-1' : 'w-full'}`}
+            />
+        </div>
         
         <div className="flex gap-2 pt-2">
           <button 

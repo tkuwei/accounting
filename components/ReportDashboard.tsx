@@ -340,7 +340,7 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
                   <div style={{ width: '100%', height: '100%' }}>
                     <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                       <PieChart>
-                        <Pie data={chart.data} cx="50%" cy="50%" innerRadius={40} outerRadius={65} paddingAngle={5} dataKey="value">
+                        <Pie data={chart.data} cx="50%" cy="50%" innerRadius={40} outerRadius={65} paddingAngle={2} dataKey="value">
                           {chart.data.map((entry, index) => {
                             let fill = entry.name === '淨利' ? PROFIT_COLOR : EXPENSE_COLORS[(chart.isIncomeDist && chart.data[0].name === '淨利' ? index - 1 : index) % EXPENSE_COLORS.length];
                             return <Cell key={`cell-${index}`} fill={fill} />;
