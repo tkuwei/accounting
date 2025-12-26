@@ -15,9 +15,10 @@
     <link rel="manifest" href="manifest.json">
     
     <!-- Favicon & App Icon configuration -->
-    <!-- Matches the working reference: File at root, no query strings, specific sizes attribute -->
-    <link rel="icon" sizes="192x192" href="icon.png">
+    <!-- 1. iOS (Safari) looks for this specific tag first. Placing it at Root is crucial. -->
     <link rel="apple-touch-icon" href="icon.png">
+    
+    <!-- 2. General Browsers (Desktop/Android fallback) -->
     <link rel="icon" type="image/png" href="icon.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
