@@ -29,13 +29,11 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
 
   useEffect(() => {
     // Delay rendering charts to allow flex/grid layout to settle
-    // Increased timeout to ensure container dimensions are calculated
-    const timer = setTimeout(() => setIsMounted(true), 300);
+    const timer = setTimeout(() => setIsMounted(true), 100);
     return () => clearTimeout(timer);
   }, []);
 
   const years = useMemo(() => {
-    // Optimization: Calculate unique years efficiently
     const uniqueYears = new Set<string>();
     uniqueYears.add(currentYear);
     transactions.forEach(t => {
@@ -45,17 +43,14 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
     return Array.from(uniqueYears).sort((a, b) => Number(b) - Number(a));
   }, [transactions, currentYear]);
 
-  // Filter optimization: Filter Year Data once
   const yearData = useMemo(() => transactions.filter(t => t.date.startsWith(year)), [transactions, year]);
   
-  // Filter optimization: Filter Month Data from the smaller yearData subset
   const monthData = useMemo(() => yearData.filter(t => {
     const m = new Date(t.date).getMonth() + 1;
     return m === Number(month);
   }), [yearData, month]);
 
   const calculateStats = (data: Transaction[]) => {
-    // Single pass reduction is efficiently O(N)
     return data.reduce((acc, t) => {
         if (t.type === '收入') acc.inc += t.amount;
         else acc.exp += t.amount;
@@ -63,7 +58,6 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
     }, { inc: 0, exp: 0, net: 0 });
   };
   
-  // Wrapper to add net to the result
   const getStats = (data: Transaction[]) => {
       const s = calculateStats(data);
       s.net = s.inc - s.exp;
@@ -74,16 +68,10 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
   const monthStats = getStats(monthData);
 
   const trendData = useMemo(() => {
-    // ALGORITHM OPTIMIZATION: 
-    // Use Hash Maps for aggregation to avoid nested loops. 
-    // Reduces complexity from O(Items * TimeUnits) to O(Items).
-    
     if (trendMode === 'month') {
       const statsMap = new Map<number, {inc: number, exp: number}>();
-      // Initialize map
       for(let i=1; i<=12; i++) statsMap.set(i, {inc: 0, exp: 0});
       
-      // Single pass through data
       yearData.forEach(t => {
           const m = new Date(t.date).getMonth() + 1;
           const entry = statsMap.get(m)!;
@@ -99,7 +87,6 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
       }));
 
     } else if (trendMode === 'week') {
-      // Create buckets for 53 weeks
       const weeks = new Array(53).fill(0).map((_, i) => ({ name: `W${i + 1}`, inc: 0, exp: 0, net: 0 }));
       const startOfYear = new Date(Number(year), 0, 1);
       
@@ -112,16 +99,13 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
         else weeks[weekIdx].exp += t.amount;
       });
       
-      // Calculate Net and filter out empty tail weeks if wanted (optional, keeping all for scale)
       return weeks.map(w => ({ ...w, net: w.inc - w.exp }));
 
     } else {
-      // Day Mode - Heavy Optimization needed here
       const daysInYear = ((Number(year) % 4 === 0 && Number(year) % 100 > 0) || Number(year) % 400 === 0) ? 366 : 365;
       const data = [];
       const curr = new Date(Number(year), 0, 1);
       
-      // 1. Build a fast lookup map
       const dayMap = new Map<string, {inc: number, exp: number}>();
       yearData.forEach(t => {
           if (!dayMap.has(t.date)) dayMap.set(t.date, { inc: 0, exp: 0 });
@@ -130,9 +114,7 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
           else entry.exp += t.amount;
       });
 
-      // 2. Build the timeline using the map
       for(let i=0; i<daysInYear; i++) {
-        // Use sv-SE for consistent YYYY-MM-DD format
         const dateStr = curr.toLocaleDateString('sv-SE', { timeZone: 'Asia/Taipei' });
         const stats = dayMap.get(dateStr) || { inc: 0, exp: 0 };
         
@@ -150,7 +132,6 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
   }, [yearData, trendMode, year]);
 
   const getProcessedExpenseData = (data: Transaction[]) => {
-    // Optimization: use Map for category aggregation
     const catMap = new Map<string, number>();
     
     data.forEach(t => {
@@ -283,11 +264,12 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         <div className="lg:col-span-3 bg-orange-50 p-4 rounded-3xl shadow-sm border border-orange-100 w-full min-w-0 flex flex-col">
           <SectionHeader title="年度趨勢分析" />
-          {/* Added overflow-hidden to prevent negative width calculation issues */}
-          <div className="w-full relative h-[240px] mt-auto overflow-hidden">
+          {/* Key Fix: Strict width/height on parent, and overflow hidden */}
+          <div className="w-full h-[240px] mt-auto overflow-hidden relative">
             {isMounted ? (
               <div style={{ width: '100%', height: '100%' }}>
-                <ResponsiveContainer width="100%" height="100%" minWidth={0} debounce={300}>
+                {/* Key Fix: Added minWidth={0} and minHeight={0} to prevent negative calc */}
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={200}>
                   <ComposedChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <XAxis 
                       dataKey="name" 
@@ -337,11 +319,11 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
           return (
             <div key={idx} className="bg-orange-50 p-4 rounded-3xl shadow-sm border border-orange-100 flex flex-col w-full min-w-0">
               <SectionHeader title={chart.title} sub={chart.sub} />
-              {/* Added overflow-hidden to prevent negative width calculation issues */}
-              <div className="w-full relative h-[180px] overflow-hidden">
+              <div className="w-full h-[180px] overflow-hidden relative">
                 {isMounted && chart.data.length > 0 ? (
                   <div style={{ width: '100%', height: '100%' }}>
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0} debounce={300}>
+                     {/* Key Fix: Added minWidth={0} and minHeight={0} */}
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={200}>
                       <PieChart>
                         <Pie data={chart.data} cx="50%" cy="50%" innerRadius={40} outerRadius={65} paddingAngle={2} dataKey="value">
                           {chart.data.map((entry, index) => {
