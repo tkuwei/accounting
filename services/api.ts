@@ -4,7 +4,8 @@ import { Transaction, CloudTransaction } from '../types';
 export const loadLocalData = (): Transaction[] => {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    if (!data) return [];
+    return JSON.parse(data);
   } catch (e) {
     console.error("Failed to load local data", e);
     return [];
