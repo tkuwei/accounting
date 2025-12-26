@@ -6,24 +6,28 @@
     <title>樹新記帳Studio</title>
     
     <!-- PWA configuration -->
-    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="樹新記帳">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#f8fafc">
     
-    <!-- iOS specific tags -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="樹新記帳">
+    <link rel="manifest" href="manifest.json">
     
     <!-- Favicon & App Icon configuration -->
-    <!-- Note: For iOS Add to Home Screen to work reliably, apple-touch-icon MUST NOT have query strings (like ?v=5) -->
-    <link rel="icon" type="image/png" href="public/icon.png?v=6">
-    <link rel="apple-touch-icon" href="public/icon.png">
-    <link rel="apple-touch-icon-precomposed" href="public/icon.png">
+    <!-- Matches the working reference: File at root, no query strings, specific sizes attribute -->
+    <link rel="icon" sizes="192x192" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Noto Sans TC', sans-serif; -webkit-tap-highlight-color: transparent; }
+        /* Added safe-area padding because status-bar-style is now black-translucent */
+        body { 
+            font-family: 'Noto Sans TC', sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+            padding-top: env(safe-area-inset-top);
+        }
         /* Hide scrollbar for Chrome, Safari and Opera */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         /* Hide scrollbar for IE, Edge and Firefox */
