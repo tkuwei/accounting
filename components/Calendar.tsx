@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Transaction } from '../types';
 
 interface CalendarProps {
@@ -18,6 +18,23 @@ const Calendar: React.FC<CalendarProps> = ({ viewDate, selectedDate, transaction
   
   const daysArray = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const emptyDays = Array.from({ length: firstDay }, (_, i) => i);
+
+  // Performance Optimization: 
+  // Create a Set of dates that have transactions for O(1) lookup complexity.
+  // This prevents the app from slowing down as the transaction history grows (e.g. 10k+ records).
+  const hasDataMap = useMemo(() => {
+    // Only look at transactions in the current viewing month/year to further optimize
+    const prefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+    const activeDates = new Set<string>();
+    
+    // We iterate through transactions once, which is much faster than .some() inside the render loop
+    for (const t of transactions) {
+      if (t.date.startsWith(prefix)) {
+        activeDates.add(t.date);
+      }
+    }
+    return activeDates;
+  }, [transactions, year, month]);
 
   return (
     <div className="bg-orange-50 p-5 rounded-3xl shadow-lg border border-orange-100">
@@ -43,7 +60,9 @@ const Calendar: React.FC<CalendarProps> = ({ viewDate, selectedDate, transaction
         {emptyDays.map(i => <div key={`empty-${i}`} />)}
         {daysArray.map(day => {
           const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-          const hasData = transactions.some(r => r.date === dateStr);
+          
+          // O(1) Lookup
+          const hasData = hasDataMap.has(dateStr);
           const isSelected = selectedDate === dateStr;
           
           let btnClass = "aspect-[1/1.1] flex flex-col items-center justify-center rounded-xl text-lg transition-all cursor-pointer border ";
@@ -53,7 +72,6 @@ const Calendar: React.FC<CalendarProps> = ({ viewDate, selectedDate, transaction
           } else if (hasData) {
             btnClass += "border-transparent bg-green-100 text-green-700 font-bold hover:bg-green-200";
           } else {
-            // Default empty days now white to pop against orange-50 bg
             btnClass += "border-transparent bg-white text-slate-500 hover:bg-slate-50";
           }
 
