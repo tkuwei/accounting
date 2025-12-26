@@ -9,7 +9,8 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="樹新記帳">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- Changed to 'default' so status bar text is black (visible on light background) -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="theme-color" content="#f8fafc">
     
     <link rel="manifest" href="manifest.json">
@@ -22,7 +23,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
-        /* Added safe-area padding because status-bar-style is now black-translucent */
+        /* Safe-area padding is kept for compatibility, though 'default' status bar usually handles spacing automatically */
         body { 
             font-family: 'Noto Sans TC', sans-serif; 
             -webkit-tap-highlight-color: transparent; 
@@ -64,6 +65,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800">
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+    <!-- Changed absolute path '/index.tsx' to relative './index.tsx' for better compatibility -->
+    <script type="module" src="./index.tsx"></script>
 </body>
 </html>
