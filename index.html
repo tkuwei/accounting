@@ -15,11 +15,9 @@
     <link rel="manifest" href="manifest.json">
     
     <!-- Favicon & App Icon configuration -->
-    <!-- 1. iOS (Safari) looks for this specific tag first. Placing it at Root is crucial. -->
-    <link rel="apple-touch-icon" href="icon.png">
-    
-    <!-- 2. General Browsers (Desktop/Android fallback) -->
-    <link rel="icon" type="image/png" href="icon.png">
+    <!-- Added sizes attribute to help iOS identify the best icon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
