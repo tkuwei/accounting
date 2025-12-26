@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   ComposedChart, Line, Bar, XAxis, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, Legend
@@ -9,25 +9,16 @@ interface ReportDashboardProps {
   transactions: Transaction[];
 }
 
-// Diverse palette for expenses (excluding the specific Blue used for Profit)
 const EXPENSE_COLORS = [
-  '#ef4444', // Red
-  '#10b981', // Emerald
-  '#f59e0b', // Amber
-  '#8b5cf6', // Violet
-  '#ec4899', // Pink
-  '#06b6d4', // Cyan
-  '#f97316', // Orange
-  '#84cc16', // Lime
-  '#6366f1', // Indigo
-  '#14b8a6', // Teal
-  '#d946ef', // Fuchsia
-  '#f43f5e', // Rose
+  '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', 
+  '#06b6d4', '#f97316', '#84cc16', '#6366f1', '#14b8a6', 
+  '#d946ef', '#f43f5e',
 ];
 
-const PROFIT_COLOR = '#3b82f6'; // Blue 500 (Distinct from expense colors)
+const PROFIT_COLOR = '#3b82f6';
 
 const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
+  const [isMounted, setIsMounted] = useState(false);
   const currentYear = new Date().getFullYear().toString();
   const currentMonth = (new Date().getMonth() + 1).toString();
   
@@ -35,7 +26,12 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
   const [month, setMonth] = useState(currentMonth);
   const [trendMode, setTrendMode] = useState<ReportTrendMode>('month');
 
-  // Generate Year Options
+  // Enhanced mounting check to ensure layout is ready before Recharts starts calculating
+  useEffect(() => {
+    const timer = setTimeout(() => setIsMounted(true), 200);
+    return () => clearTimeout(timer);
+  }, []);
+
   const years = useMemo(() => {
     const uniqueYears = Array.from(new Set(transactions.map(t => t.date.split('-')[0])))
       .filter(y => !isNaN(Number(y)) && y.length === 4);
@@ -43,14 +39,12 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
     return uniqueYears.sort((a, b) => Number(b) - Number(a));
   }, [transactions, currentYear]);
 
-  // Filter Data
   const yearData = useMemo(() => transactions.filter(t => t.date.startsWith(year)), [transactions, year]);
   const monthData = useMemo(() => yearData.filter(t => {
     const m = new Date(t.date).getMonth() + 1;
     return m === Number(month);
   }), [yearData, month]);
 
-  // Calculate Statistics
   const calculateStats = (data: Transaction[]) => {
     const inc = data.filter(t => t.type === '收入').reduce((sum, t) => sum + t.amount, 0);
     const exp = data.filter(t => t.type === '支出').reduce((sum, t) => sum + t.amount, 0);
@@ -60,7 +54,6 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
   const yearStats = calculateStats(yearData);
   const monthStats = calculateStats(monthData);
 
-  // Prepare Trend Data
   const trendData = useMemo(() => {
     if (trendMode === 'month') {
       return Array.from({ length: 12 }, (_, i) => {
@@ -81,72 +74,66 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
       });
       return weeks.map(w => ({ ...w, net: w.inc - w.exp }));
     } else {
-      // Day Mode
       const daysInYear = ((Number(year) % 4 === 0 && Number(year) % 100 > 0) || Number(year) % 400 === 0) ? 366 : 365;
       const data = [];
       const curr = new Date(Number(year), 0, 1);
-      
       for(let i=0; i<daysInYear; i++) {
         const dateStr = curr.toLocaleDateString('sv-SE', { timeZone: 'Asia/Taipei' });
         const dayItems = yearData.filter(t => t.date === dateStr);
         const stats = calculateStats(dayItems);
-        data.push({ 
-            name: `${curr.getMonth()+1}/${curr.getDate()}`, 
-            fullDate: dateStr,
-            ...stats 
-        });
+        data.push({ name: `${curr.getMonth()+1}/${curr.getDate()}`, fullDate: dateStr, ...stats });
         curr.setDate(curr.getDate() + 1);
       }
       return data;
     }
   }, [yearData, trendMode, year]);
 
-  // Shared Helper: Process expenses into Cost Structure format
   const getProcessedExpenseData = (data: Transaction[]) => {
     const expenses = data.filter(t => t.type === '支出');
     const catMap: Record<string, number> = {};
-    
     expenses.forEach(t => {
       let key = t.category;
       if (key.includes('薪資')) key = '薪資總計';
       else if (['清潔維護費', '維修', '雜項'].includes(key)) key = '雜支';
       catMap[key] = (catMap[key] || 0) + t.amount;
     });
-
-    return Object.entries(catMap)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value);
+    return Object.entries(catMap).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
   };
 
   const getIncomeCompositionData = (data: Transaction[]) => {
     const stats = calculateStats(data);
     if (stats.inc === 0 && stats.exp === 0) return [];
     const expenseBreakdown = getProcessedExpenseData(data);
-    if (stats.net > 0) {
-      return [{ name: '淨利', value: stats.net }, ...expenseBreakdown];
-    }
+    if (stats.net > 0) return [{ name: '淨利', value: stats.net }, ...expenseBreakdown];
     return expenseBreakdown;
   };
 
-  const getCostData = (data: Transaction[]) => getProcessedExpenseData(data);
-
   const chartsData = [
-    { title: `${year}年 收入分配`, data: getIncomeCompositionData(yearData), isIncomeDist: true },
-    { title: `${year}年 成本結構`, data: getCostData(yearData), isIncomeDist: false },
-    { title: `${month}月 收入分配`, data: getIncomeCompositionData(monthData), isIncomeDist: true },
-    { title: `${month}月 成本結構`, data: getCostData(monthData), isIncomeDist: false },
+    { title: `收入分配`, data: getIncomeCompositionData(yearData), isIncomeDist: true, sub: `${year}年` },
+    { title: `成本結構`, data: getProcessedExpenseData(yearData), isIncomeDist: false, sub: `${year}年` },
+    { title: `收入分配`, data: getIncomeCompositionData(monthData), isIncomeDist: true, sub: `${month}月` },
+    { title: `成本結構`, data: getProcessedExpenseData(monthData), isIncomeDist: false, sub: `${month}月` },
   ];
 
   const StatCard = ({ title, value, colorClass }: { title: string; value: number; colorClass: string }) => (
-    <div className={`p-3 rounded-xl text-center ${colorClass}`}>
-      <p className="text-[10px] uppercase font-bold opacity-70 mb-1">{title}</p>
-      <p className="text-sm md:text-lg font-black tracking-tight">${value.toLocaleString()}</p>
+    <div className={`p-3.5 rounded-xl flex items-center justify-between gap-3 border transition-all ${colorClass}`}>
+      <p className="text-base font-bold opacity-80 shrink-0">{title}</p>
+      <p className="text-xl font-black tracking-tight truncate">${value.toLocaleString()}</p>
+    </div>
+  );
+
+  const SectionHeader = ({ title, sub }: { title: string, sub?: string }) => (
+    <div className="flex items-center justify-between mb-3">
+      <h3 className="text-lg font-black text-slate-700 flex items-center gap-2">
+        <div className="w-1.5 h-6 bg-blue-500 rounded-full"></div>
+        {title}
+      </h3>
+      {sub && <span className="text-xs font-bold text-slate-400">{sub}</span>}
     </div>
   );
 
   return (
     <div className="space-y-6 pb-20">
-      {/* Controls */}
       <div className="bg-orange-50 p-5 rounded-3xl shadow-sm border border-orange-100 flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="flex gap-4">
           <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-orange-100">
@@ -162,57 +149,55 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
             </select>
           </div>
         </div>
-        
         <div className="flex bg-white p-1 rounded-xl w-full md:w-auto border border-orange-100">
           {(['month', 'week', 'day'] as ReportTrendMode[]).map(m => (
-             <button 
-               key={m}
-               onClick={() => setTrendMode(m)}
-               className={`flex-1 md:flex-none px-4 py-2 rounded-lg font-bold text-sm transition-all ${
-                 trendMode === m ? 'bg-orange-500 shadow-sm text-white' : 'text-slate-400'
-               }`}
-             >
+             <button key={m} onClick={() => setTrendMode(m)} className={`flex-1 md:flex-none px-4 py-2 rounded-lg font-bold text-sm transition-all ${trendMode === m ? 'bg-orange-500 shadow-sm text-white' : 'text-slate-400'}`}>
                {m === 'month' ? '月線' : m === 'week' ? '週線' : '日線'}
              </button>
           ))}
         </div>
       </div>
 
-      {/* Main Charts Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-orange-50 p-6 rounded-3xl shadow-sm border border-orange-100 min-w-0 relative">
-          <h3 className="text-lg font-black text-slate-700 mb-6 flex items-center gap-2">
-             <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
-             年度趨勢分析
-          </h3>
-          <div className="h-[300px] w-full relative">
-            <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0} debounce={100}>
-              <ComposedChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <XAxis dataKey="name" tick={{fontSize: 10}} interval={trendMode === 'day' ? 30 : 0} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} />
-                <Bar dataKey="inc" name="收入" fill="#4ade80" radius={[4, 4, 0, 0]} barSize={20} />
-                <Bar dataKey="exp" name="支出" fill="#f87171" radius={[4, 4, 0, 0]} barSize={20} />
-                <Line type="monotone" dataKey="net" name="營利" stroke="#3b82f6" strokeWidth={3} dot={false} />
-              </ComposedChart>
-            </ResponsiveContainer>
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="lg:col-span-3 bg-orange-50 p-6 rounded-3xl shadow-sm border border-orange-100 min-w-0 relative">
+          <SectionHeader title="年度趨勢分析" />
+          <div className="w-full relative h-[320px] overflow-hidden min-w-0">
+            {isMounted && (
+              <ResponsiveContainer width="100%" height="100%" debounce={50}>
+                <ComposedChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <XAxis 
+                    dataKey="name" 
+                    tick={{fontSize: 10}} 
+                    interval={trendMode === 'day' ? 30 : (trendMode === 'week' ? 4 : 0)} 
+                    axisLine={false} 
+                    tickLine={false} 
+                  />
+                  <Tooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} />
+                  <Bar dataKey="inc" name="收入" fill="#4ade80" radius={[4, 4, 0, 0]} barSize={16} />
+                  <Bar dataKey="exp" name="支出" fill="#f87171" radius={[4, 4, 0, 0]} barSize={16} />
+                  <Line type="monotone" dataKey="net" name="營利" stroke="#3b82f6" strokeWidth={3} dot={false} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
-        <div className="bg-orange-50 p-6 rounded-3xl shadow-sm border border-orange-100 flex flex-col justify-center gap-6">
-          <div>
-            <p className="text-center text-xs font-bold text-slate-400 mb-3 pb-2 border-b border-orange-100">{year}年 年度經營概況</p>
-            <div className="grid grid-cols-3 gap-2">
-              <StatCard title="年收入" value={yearStats.inc} colorClass="bg-white text-green-700 border border-green-100" />
-              <StatCard title="年支出" value={yearStats.exp} colorClass="bg-white text-red-700 border border-red-100" />
-              <StatCard title="年營利" value={yearStats.net} colorClass="bg-white text-blue-700 border border-blue-100" />
+        <div className="lg:col-span-2 bg-orange-50 p-6 rounded-3xl shadow-sm border border-orange-100 flex flex-col justify-start gap-6">
+          <div className="space-y-3">
+            <SectionHeader title="年度經營概況" sub={`${year}年`} />
+            <div className="grid grid-cols-1 gap-2.5">
+              <StatCard title="年收入" value={yearStats.inc} colorClass="bg-white text-green-700 border-green-50" />
+              <StatCard title="年支出" value={yearStats.exp} colorClass="bg-white text-red-700 border-red-50" />
+              <StatCard title="年營利" value={yearStats.net} colorClass="bg-white text-blue-700 border-blue-50" />
             </div>
           </div>
-          <div>
-            <p className="text-center text-xs font-bold text-slate-400 mb-3 pb-2 border-b border-orange-100">{month}月 本月損益</p>
-            <div className="grid grid-cols-3 gap-2">
-              <StatCard title="月收入" value={monthStats.inc} colorClass="bg-white text-green-700 border border-green-100" />
-              <StatCard title="月支出" value={monthStats.exp} colorClass="bg-white text-red-700 border border-red-100" />
-              <StatCard title="月營利" value={monthStats.net} colorClass="bg-blue-600 text-white shadow-md shadow-blue-200" />
+          
+          <div className="space-y-3">
+            <SectionHeader title="本月損益概況" sub={`${month}月`} />
+            <div className="grid grid-cols-1 gap-2.5">
+              <StatCard title="月收入" value={monthStats.inc} colorClass="bg-white text-green-700 border-green-50" />
+              <StatCard title="月支出" value={monthStats.exp} colorClass="bg-white text-red-700 border-red-50" />
+              <StatCard title="月營利" value={monthStats.net} colorClass="bg-blue-600 text-white shadow-lg shadow-blue-100 border-blue-600" />
             </div>
           </div>
         </div>
@@ -222,13 +207,13 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
         {chartsData.map((chart, idx) => {
           const totalValue = chart.data.reduce((sum, item) => sum + item.value, 0);
           return (
-            <div key={idx} className="bg-orange-50 p-4 rounded-3xl shadow-sm border border-orange-100 flex flex-col min-w-0 relative">
-              <h4 className="text-xs font-bold text-slate-500 mb-4 text-center">{chart.title}</h4>
-              <div className="w-full h-[220px] relative">
-                {chart.data.length > 0 ? (
-                  <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0} debounce={100}>
+            <div key={idx} className="bg-orange-50 p-6 rounded-3xl shadow-sm border border-orange-100 flex flex-col min-w-0 relative">
+              <SectionHeader title={chart.title} sub={chart.sub} />
+              <div className="w-full relative h-[250px] overflow-hidden min-w-0">
+                {isMounted && chart.data.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%" debounce={50}>
                     <PieChart>
-                      <Pie data={chart.data} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                      <Pie data={chart.data} cx="50%" cy="50%" innerRadius={60} outerRadius={85} paddingAngle={5} dataKey="value">
                         {chart.data.map((entry, index) => {
                           let fill = entry.name === '淨利' ? PROFIT_COLOR : EXPENSE_COLORS[(chart.isIncomeDist && chart.data[0].name === '淨利' ? index - 1 : index) % EXPENSE_COLORS.length];
                           return <Cell key={`cell-${index}`} fill={fill} />;
@@ -238,10 +223,10 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
                         formatter={(value: number, name: string) => [`$${value.toLocaleString()} (${totalValue > 0 ? ((value / totalValue) * 100).toFixed(1) : '0'}%)`, name]}
                         contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                       />
-                      <Legend iconType="circle" wrapperStyle={{fontSize: '10px'}} />
+                      <Legend iconType="circle" wrapperStyle={{fontSize: '11px', paddingTop: '10px'}} />
                     </PieChart>
                   </ResponsiveContainer>
-                ) : (
+                ) : !isMounted ? null : (
                   <div className="h-full flex items-center justify-center text-slate-300 text-xs">無數據</div>
                 )}
               </div>
