@@ -293,8 +293,8 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
 
   return (
     <div className="space-y-4 pb-20">
-      <div className="bg-orange-50 p-3 rounded-2xl shadow-sm border border-orange-100 flex flex-col xl:flex-row gap-3 items-start xl:items-center justify-between">
-        <div className="flex gap-2 flex-wrap items-center">
+      <div className="bg-orange-50 p-3 rounded-2xl shadow-sm border border-orange-100 flex flex-col xl:flex-row gap-3 items-start xl:items-end justify-between">
+        <div className="flex gap-2 flex-wrap items-end">
           <div className="flex items-center gap-2 bg-white px-2 py-1.5 rounded-lg border border-orange-100">
             <span className="font-bold text-slate-400 text-xs">年份</span>
             <select value={year} onChange={(e) => setYear(e.target.value)} className="bg-transparent font-bold outline-none text-slate-700 text-sm">
@@ -354,7 +354,7 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ transactions }) => {
                     <XAxis 
                       dataKey="name" 
                       tick={{fontSize: 10}} 
-                      interval={trendMode === 'day' ? 'preserveStartEnd' : 0} 
+                      interval={trendMode === 'month' ? 0 : 'preserveStartEnd'} 
                       axisLine={false} 
                       tickLine={false} 
                       dy={5}
