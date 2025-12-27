@@ -25,5 +25,4 @@ yarn-error.log*
 
 # User Assets (Protect from overwrite/sync deletion)
 # Ignore these so the system doesn't delete them when syncing code
-icon.png
 public/

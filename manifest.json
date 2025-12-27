@@ -2,7 +2,7 @@
   "name": "樹新記帳Studio",
   "short_name": "樹新記帳",
   "start_url": "./",
-  "scope": "/",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#f8fafc",
