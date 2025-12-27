@@ -23,5 +23,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Explicitly allow icon.png (force track)
-!icon.png
+# User Assets (Protect from overwrite/sync deletion)
+# Ignore these so the system doesn't delete them when syncing code
+icon.png
+public/
