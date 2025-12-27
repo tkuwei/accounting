@@ -10,6 +10,19 @@ export const CATEGORIES = {
     }
 };
 
+// Logic for Smart Distribution in Reports
+export const EXPENSE_DISTRIBUTION_RULES = {
+  // Average over the month (Total / Days)
+  // 建立每日經營的「低消」門檻
+  FIXED: ['租金', '水費', '電費', '瓦斯類', '電話費', '清潔維護費', '薪資 (月)'],
+  
+  // Distribute based on daily revenue weight (Total * (DailyRevenue/TotalRevenue))
+  // 精確計算每日毛利，生意好的日子分攤更多食材成本
+  // Excludes 'FoodPanda'/'UberEats' as they are transaction-tied fees
+  // Excludes '稅務', '維修' as they are specific events
+  WEIGHTED: ['米糧', '蔬菜', '火鍋料', '調味料', '耗材'] 
+};
+
 // Quick note presets based on selected category
 export const NOTE_PRESETS: Record<string, string[]> = {
   '食材': ['豆腐鴨血', '臭豆腐', '蛤蜊', '洋蔥', '拉麵', '泡菜', '可樂', '冰淇淋'],
