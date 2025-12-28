@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>樹新記帳Studio</title>
     
     <!-- PWA configuration -->
@@ -13,13 +13,13 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="theme-color" content="#f8fafc">
     
-    <!-- Added version param ?v=3 to force cache refresh on iOS -->
-    <link rel="manifest" href="manifest.json?v=3">
+    <!-- Added version param ?v=5 to force cache refresh on iOS -->
+    <link rel="manifest" href="manifest.json?v=5">
     
     <!-- Favicon & App Icon configuration -->
     <!-- Added sizes attribute to help iOS identify the best icon -->
-    <link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=3">
-    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=3">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=5">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=5">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -29,7 +29,17 @@
             font-family: 'Noto Sans TC', sans-serif; 
             -webkit-tap-highlight-color: transparent; 
             padding-top: env(safe-area-inset-top);
+            /* Prevent 'rubber band' scrolling effect on iOS PWA */
+            overscroll-behavior-y: none;
+            background-color: #f8fafc;
         }
+        
+        /* Prevent accidental text selection on UI elements */
+        button, .cursor-pointer {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
         /* Hide scrollbar for Chrome, Safari and Opera */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         /* Hide scrollbar for IE, Edge and Firefox */
