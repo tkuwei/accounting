@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Transaction, ViewMode, ToastState } from './types';
+import { Transaction, ViewMode, ToastState, SyncStatus } from './types';
 import { loadLocalData, saveLocalData, fetchCloudData, syncTransactionToCloud } from './services/api';
 import Calendar from './components/Calendar';
 import InputForm from './components/InputForm';
@@ -15,7 +15,8 @@ const App: React.FC = () => {
   const [viewDate, setViewDate] = useState<Date>(new Date());
   
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [initialLoading, setInitialLoading] = useState<boolean>(false); // Only for first load
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle'); // Non-blocking status
   const [toast, setToast] = useState<ToastState>({ show: false, message: '', type: 'success' });
 
   // Initial Load
@@ -24,7 +25,7 @@ const App: React.FC = () => {
     if (local.length > 0) setTransactions(local);
     
     const sync = async () => {
-      setLoading(true);
+      setInitialLoading(true);
       try {
         const cloud = await fetchCloudData();
         if (cloud.length > 0) {
@@ -34,7 +35,7 @@ const App: React.FC = () => {
       } catch (e) {
         showToast('無法同步雲端資料，使用本地備份', 'error');
       } finally {
-        setLoading(false);
+        setInitialLoading(false);
       }
     };
     sync();
@@ -59,15 +60,21 @@ const App: React.FC = () => {
     saveLocalData(newTransactions);
     setEditingId(null);
 
-    // Sync to Cloud
-    setLoading(true);
+    // Non-blocking Sync to Cloud
+    setSyncStatus('saving');
     try {
       await syncTransactionToCloud(newTx);
-      showToast(editingId ? '修改完成' : '已成功儲存');
+      setSyncStatus('success');
+      // Revert to idle after 3 seconds so the green dot doesn't stay forever
+      setTimeout(() => setSyncStatus('idle'), 3000);
+      
+      // Only show toast if it was an edit, for new records the green dot is enough feedback
+      if (editingId) showToast('修改完成');
     } catch (e) {
+      setSyncStatus('error');
       showToast('儲存失敗，請檢查網路', 'error');
-    } finally {
-      setLoading(false);
+      // Keep error status visible a bit longer or until next action
+      setTimeout(() => setSyncStatus('idle'), 5000);
     }
   };
 
@@ -79,17 +86,19 @@ const App: React.FC = () => {
     saveLocalData(newTransactions);
     setEditingId(null);
 
-    setLoading(true);
+    setSyncStatus('saving');
     try {
       const txToDelete = transactions.find(t => t.id === id);
       if (txToDelete) {
         await syncTransactionToCloud({ id, date: txToDelete.date, action: 'delete' });
       }
+      setSyncStatus('success');
+      setTimeout(() => setSyncStatus('idle'), 3000);
       showToast('紀錄已刪除', 'info');
     } catch (e) {
+      setSyncStatus('error');
       showToast('刪除失敗', 'error');
-    } finally {
-      setLoading(false);
+      setTimeout(() => setSyncStatus('idle'), 5000);
     }
   };
 
@@ -98,7 +107,9 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-10">
-      <Loading isLoading={loading} />
+      {/* Only show blocking loading on initial start */}
+      <Loading isLoading={initialLoading} />
+      
       <Toast 
         show={toast.show} 
         message={toast.message} 
@@ -191,6 +202,7 @@ const App: React.FC = () => {
                   onDelete={handleDeleteTransaction}
                   editingTransaction={editingTransaction}
                   onCancelEdit={() => setEditingId(null)}
+                  syncStatus={syncStatus}
                 />
               </div>
             </div>

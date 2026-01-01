@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Transaction, RecordMode, TransactionType } from '../types';
+import { Transaction, RecordMode, TransactionType, SyncStatus } from '../types';
 import { CATEGORIES, NOTE_PRESETS } from '../constants';
 
 interface InputFormProps {
@@ -8,9 +8,17 @@ interface InputFormProps {
   onDelete: (id: number) => void;
   editingTransaction: Transaction | null;
   onCancelEdit: () => void;
+  syncStatus: SyncStatus;
 }
 
-const InputForm: React.FC<InputFormProps> = ({ selectedDate, onSave, onDelete, editingTransaction, onCancelEdit }) => {
+const InputForm: React.FC<InputFormProps> = ({ 
+  selectedDate, 
+  onSave, 
+  onDelete, 
+  editingTransaction, 
+  onCancelEdit,
+  syncStatus 
+}) => {
   const [mode, setMode] = useState<RecordMode>('income');
   const [amount, setAmount] = useState<string>('');
   const [category, setCategory] = useState<string>(CATEGORIES.income[0]);
@@ -175,9 +183,19 @@ const InputForm: React.FC<InputFormProps> = ({ selectedDate, onSave, onDelete, e
         <div className="flex gap-2 pt-2">
           <button 
             onClick={handleSubmit}
-            className="flex-1 bg-slate-900 text-white font-black py-4 rounded-xl text-lg shadow-xl hover:bg-black transition-transform active:scale-95"
+            className="flex-1 bg-slate-900 text-white font-black py-4 rounded-xl text-lg shadow-xl hover:bg-black transition-transform active:scale-95 flex items-center justify-center gap-3"
           >
-            {editingTransaction ? '更新紀錄' : '確認存入'}
+            <span>{editingTransaction ? '更新紀錄' : '確認存入'}</span>
+            {/* Status Indicator Dot */}
+            {syncStatus !== 'idle' && (
+              <div 
+                className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${
+                  syncStatus === 'saving' ? 'bg-orange-500 animate-pulse' : 
+                  syncStatus === 'success' ? 'bg-green-500' : 
+                  'bg-red-500'
+                }`}
+              />
+            )}
           </button>
           
           {editingTransaction && (

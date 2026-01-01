@@ -27,3 +27,5 @@ export interface ToastState {
   message: string;
   type: 'success' | 'error' | 'info';
 }
+
+export type SyncStatus = 'idle' | 'saving' | 'success' | 'error';
